@@ -36,22 +36,65 @@ export default function MockupPage() {
   );
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [scale, setScale] = useState<number>(100); // Scale percentage (10-100)
+  const [scale, setScale] = useState<number>(100);
+  const [offsetX, setOffsetX] = useState<number>(0);
+  const [offsetY, setOffsetY] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
 
-  // Handle file upload
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Clean up previous URL
       if (uploadedImage) {
         URL.revokeObjectURL(uploadedImage);
       }
       const url = URL.createObjectURL(file);
       setUploadedImage(url);
+      setOffsetX(0);
+      setOffsetY(0);
     }
   };
 
-  // Draw mockup and artwork on canvas
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!uploadedImage) return;
+    setIsDragging(true);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    setDragStart({
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging || !dragStart) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const currentX = (e.clientX - rect.left) * scaleX;
+    const currentY = (e.clientY - rect.top) * scaleY;
+    const deltaX = currentX - dragStart.x;
+    const deltaY = currentY - dragStart.y;
+    setOffsetX((prev) => prev + deltaX);
+    setOffsetY((prev) => prev + deltaY);
+    setDragStart({ x: currentX, y: currentY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragStart(null);
+  };
+
+  const handleResetPosition = () => {
+    setOffsetX(0);
+    setOffsetY(0);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -61,29 +104,23 @@ export default function MockupPage() {
 
     setIsDrawing(true);
 
-    // Set canvas dimensions
     canvas.width = selectedTemplate.canvasSize.width;
     canvas.height = selectedTemplate.canvasSize.height;
 
-    // Clear canvas first
     ctx.fillStyle = "#f3f4f6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load mockup image
     const mockupImg = new Image();
     
     mockupImg.onload = () => {
-      // Draw mockup base
       ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
 
-      // If there's uploaded art, draw it on top
       if (uploadedImage) {
         const artImg = new Image();
         
         artImg.onload = () => {
           const { x, y, width, height } = selectedTemplate.printArea;
 
-          // Calculate scaled dimensions
           const { targetW, targetH } = fitIntoBox(
             artImg.width,
             artImg.height,
@@ -91,17 +128,50 @@ export default function MockupPage() {
             height
           );
 
-          // Apply user scale
           const scaledW = (targetW * scale) / 100;
           const scaledH = (targetH * scale) / 100;
 
-          // Center the art inside printArea
-          const drawX = x + (width - scaledW) / 2;
-          const drawY = y + (height - scaledH) / 2;
+          const drawX = x + (width - scaledW) / 2 + offsetX;
+          const drawY = y + (height - scaledH) / 2 + offsetY;
 
-          // Draw the artwork
           ctx.drawImage(artImg, drawX, drawY, scaledW, scaledH);
-          setIsDrawing(false);
+          
+          // Draw overlay if exists
+          if (selectedTemplate.overlaySrc) {
+            const overlayImg = new Image();
+            overlayImg.onload = () => {
+              ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
+              
+              // Draw print area guide on top
+              ctx.setLineDash([10, 5]);
+              ctx.strokeStyle = "#ef4444";
+              ctx.lineWidth = 2;
+              ctx.strokeRect(x, y, width, height);
+              ctx.setLineDash([]);
+              
+              setIsDrawing(false);
+            };
+            overlayImg.onerror = () => {
+              // If overlay fails to load, just draw the guide
+              ctx.setLineDash([10, 5]);
+              ctx.strokeStyle = "#ef4444";
+              ctx.lineWidth = 2;
+              ctx.strokeRect(x, y, width, height);
+              ctx.setLineDash([]);
+              
+              setIsDrawing(false);
+            };
+            overlayImg.src = selectedTemplate.overlaySrc;
+          } else {
+            // Draw print area guide on top
+            ctx.setLineDash([10, 5]);
+            ctx.strokeStyle = "#ef4444";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, width, height);
+            ctx.setLineDash([]);
+            
+            setIsDrawing(false);
+          }
         };
 
         artImg.onerror = (err) => {
@@ -111,13 +181,19 @@ export default function MockupPage() {
 
         artImg.src = uploadedImage;
       } else {
+        // Draw print area guide when no image is uploaded
+        const { x, y, width, height } = selectedTemplate.printArea;
+        ctx.setLineDash([10, 5]);
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        ctx.setLineDash([]);
         setIsDrawing(false);
       }
     };
 
     mockupImg.onerror = (err) => {
       console.error("Failed to load mockup image:", err);
-      // Draw placeholder
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(600, 400, 800, 1200);
       ctx.fillStyle = "#9ca3af";
@@ -130,9 +206,8 @@ export default function MockupPage() {
     };
 
     mockupImg.src = selectedTemplate.mockupSrc;
-  }, [selectedTemplate, uploadedImage, scale]);
+  }, [selectedTemplate, uploadedImage, scale, offsetX, offsetY]);
 
-  // Download canvas as PNG
   const handleDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -156,10 +231,8 @@ export default function MockupPage() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Merch Mockup Studio</h1>
 
-        {/* Controls */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex flex-wrap gap-4 items-end">
-            {/* Template Selector */}
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Template
@@ -182,7 +255,6 @@ export default function MockupPage() {
               </select>
             </div>
 
-            {/* File Upload */}
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Design
@@ -195,7 +267,6 @@ export default function MockupPage() {
               />
             </div>
 
-            {/* Scale Slider */}
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Design Size: {scale}%
@@ -216,7 +287,16 @@ export default function MockupPage() {
               />
             </div>
 
-            {/* Download Button */}
+            <div>
+              <button
+                onClick={handleResetPosition}
+                disabled={!uploadedImage || (offsetX === 0 && offsetY === 0)}
+                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Reset Position
+              </button>
+            </div>
+
             <div>
               <button
                 onClick={handleDownload}
@@ -229,16 +309,25 @@ export default function MockupPage() {
           </div>
         </div>
 
-        {/* Canvas */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-center">
             <canvas
               ref={canvasRef}
-              className="max-w-full h-auto border border-gray-200 rounded"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              className="max-w-full h-auto border border-gray-200 rounded cursor-move"
+              style={{ cursor: uploadedImage ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
             />
           </div>
           {isDrawing && (
             <p className="text-center text-gray-500 mt-4">Rendering...</p>
+          )}
+          {uploadedImage && (
+            <p className="text-center text-gray-500 mt-4 text-sm">
+              Drag the design to reposition it within the print area
+            </p>
           )}
         </div>
       </div>

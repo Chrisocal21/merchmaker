@@ -26,16 +26,26 @@
   <ellipse cx="1000" cy="1850" rx="400" ry="50" fill="#000000" opacity="0.1"/>
   
   
-    <!-- Front of Shirt -->
-    <path d="M 650 400 L 800 350 L 850 400 L 850 1600 L 650 1650 Z" 
-          fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
-    <path d="M 1350 400 L 1200 350 L 1150 400 L 1150 1600 L 1350 1650 Z" 
-          fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
-    <rect x="850" y="350" width="300" height="1300" 
+    <!-- Front of Shirt - More realistic t-shirt shape -->
+    <!-- Left Sleeve -->
+    <ellipse cx="550" cy="550" rx="150" ry="120" 
+             fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
+    
+    <!-- Right Sleeve -->
+    <ellipse cx="1450" cy="550" rx="150" ry="120" 
+             fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
+    
+    <!-- Main Body -->
+    <path d="M 650 450 Q 1000 420 1350 450 L 1300 1650 Q 1000 1680 700 1650 Z" 
           fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
     
-    <!-- V-neck -->
-    <path d="M 900 350 L 1000 450 L 1100 350 L 1000 350 Z" fill="#0a0a0a"/>
+    <!-- Neckline -->
+    <ellipse cx="1000" cy="450" rx="120" ry="40" fill="#0a0a0a"/>
+    <ellipse cx="1000" cy="445" rx="100" ry="30" fill="url(#fabrichoodie_front.svg)"/>
+    
+    <!-- Shoulder seams -->
+    <line x1="650" y1="450" x2="700" y2="500" stroke="#0a0a0a" stroke-width="2" opacity="0.5"/>
+    <line x1="1350" y1="450" x2="1300" y2="500" stroke="#0a0a0a" stroke-width="2" opacity="0.5"/>
   
   
   
