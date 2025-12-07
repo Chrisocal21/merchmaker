@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2000" height="2000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fabrichoodie_front.svg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d0d0d;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="2000" height="2000" fill="#f8f9fa"/>
+  
+  <!-- Shadow -->
+  <ellipse cx="1000" cy="1850" rx="400" ry="50" fill="#000000" opacity="0.1"/>
+  
+  
+    <!-- Front of Shirt -->
+    <path d="M 650 400 L 800 350 L 850 400 L 850 1600 L 650 1650 Z" 
+          fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
+    <path d="M 1350 400 L 1200 350 L 1150 400 L 1150 1600 L 1350 1650 Z" 
+          fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
+    <rect x="850" y="350" width="300" height="1300" 
+          fill="url(#fabrichoodie_front.svg)" filter="url(#shadow)"/>
+    
+    <!-- V-neck -->
+    <path d="M 900 350 L 1000 450 L 1100 350 L 1000 350 Z" fill="#0a0a0a"/>
+  
+  
+  
+    <!-- Hood -->
+    <ellipse cx="1000" cy="320" rx="120" ry="80" fill="#0d0d0d" filter="url(#shadow)"/>
+    <path d="M 920 340 Q 1000 380 1080 340" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+  
+  
+  <!-- Fabric texture overlay -->
+  <rect x="850" y="350" width="300" height="1300" 
+        fill="url(#fabrichoodie_front.svg)" opacity="0.3"/>
+  
+  <!-- Print area indicator (subtle) -->
+  <rect x="1150" y="750" width="350" height="350" 
+        fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="15,10" opacity="0.3"/>
+</svg>

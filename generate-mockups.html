@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Mockup Placeholders</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Generate placeholder mockup images
+        const mockups = [
+            { name: 'tee_front.png', label: 'TEE\nFRONT', chest: true },
+            { name: 'tee_back.png', label: 'TEE\nBACK', chest: false },
+            { name: 'hoodie_front.png', label: 'HOODIE\nFRONT', chest: true },
+            { name: 'hoodie_back.png', label: 'HOODIE\nBACK', chest: false }
+        ];
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 2000;
+        canvas.height = 2000;
+
+        mockups.forEach(mockup => {
+            // Background
+            ctx.fillStyle = '#f3f4f6';
+            ctx.fillRect(0, 0, 2000, 2000);
+
+            // Shirt shape
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(600, 400, 800, 1200);
+
+            // Label
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = 'bold 80px Arial';
+            ctx.textAlign = 'center';
+            const lines = mockup.label.split('\n');
+            lines.forEach((line, i) => {
+                ctx.fillText(line, 1000, 900 + i * 100);
+            });
+
+            // Print area indicator
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([20, 10]);
+            
+            if (mockup.chest) {
+                // Chest area
+                ctx.strokeRect(1150, mockup.name.includes('hoodie') ? 750 : 650, 
+                              mockup.name.includes('hoodie') ? 350 : 400, 
+                              mockup.name.includes('hoodie') ? 350 : 400);
+            } else {
+                // Back area
+                ctx.strokeRect(600, mockup.name.includes('hoodie') ? 500 : 400, 
+                              800, 
+                              mockup.name.includes('hoodie') ? 900 : 1000);
+            }
+
+            // Download
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = mockup.name;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
+
+        document.body.innerHTML = '<h1>Check your Downloads folder for the mockup images!</h1><p>Move them to: public/mockups/</p>';
+    </script>
+</body>
+</html>
